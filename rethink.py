@@ -43,8 +43,9 @@ def paint(job):
 
     # Do computation
     update_job(job.get("id"), {"status": "processing"})
-    # subprocess.call("python3 neural-doodle/doodle.py --style {painting} --output {output} --device=gpu0 --iterations=80".format(painting=painting_image_name, output=output_image_name),shell=True)
-    copyfile(output_sem_image_name, output_image_name)
+    subprocess.call("python3 neural-doodle/doodle.py --style {painting} --output {output} --device=gpu0 --iterations=80".format(painting=painting_image_name, output=output_image_name),shell=True)
+    # FAKE PAINT FOR DEBUGGING
+    # copyfile(output_sem_image_name, output_image_name)
 
     # Upload image to S3
     s3_image_name = 'output/doodle-{id}.jpg'.format(id=job.get("id"))
@@ -74,8 +75,12 @@ def start():
             # Grab highest priority job
             job = get_next_job()
             # call paint on the job
+            print("Painting job {id}".format(id=job.get("id")))
             paint(job)
         except:
+            print("Waiting for new jobs..")
             feed = r.db("keane").table("paint_jobs").changes().run(conn)
+            for change in feed:
+                print("New job!")
 
 start()
