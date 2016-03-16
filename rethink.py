@@ -3,12 +3,10 @@ import requests
 import os
 import subprocess
 import boto3
+from shutil import copyfile
 
 s3 = boto3.resource('s3')
 bucket_name = 'bigeyeskeane'
-
-for bucket in s3.buckets.all():
-    print(bucket.name)
 
 conn = r.connect(
     host='aws-us-east-1-portal.14.dblayer.com',
@@ -45,7 +43,8 @@ def paint(job):
 
     # Do computation
     update_job(job.get("id"), {"status": "processing"})
-    subprocess.call("python3 neural-doodle/doodle.py --style {painting} --output {output} --device=gpu0 --iterations=80".format(painting=painting_image_name, output=output_image_name),shell=True)
+    # subprocess.call("python3 neural-doodle/doodle.py --style {painting} --output {output} --device=gpu0 --iterations=80".format(painting=painting_image_name, output=output_image_name),shell=True)
+    copyfile(output_sem_image_name, output_image_name)
 
     # Upload image to S3
     s3_image_name = 'output/doodle-{id}.jpg'.format(id=job.get("id"))
@@ -70,16 +69,13 @@ def update_job(id, updates):
     return r.db("keane").table("paint_jobs").get(id).update(updates).run(conn)
 
 def start():
-    # Grab highest priority job
-    job = get_next_job()
-
-    # call paint on the job
-    paint(job)
-
-    # grab another job
-    # TODO
-
-    # if no more jobs - wait
-    # TODO
+    while(1):
+        try:
+            # Grab highest priority job
+            job = get_next_job()
+            # call paint on the job
+            paint(job)
+        except:
+            feed = r.db("keane").table("paint_jobs").changes().run(conn)
 
 start()
