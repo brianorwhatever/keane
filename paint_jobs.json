@@ -1,7 +1,9 @@
 {
   id,
+  status: ('queued','completed','processing')
   priority,
   output_sem_url,
+  output_url,
   painting_url,
   painting_sem_url,
   type: ('doodle', 'style-transfer'),

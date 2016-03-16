@@ -2,6 +2,13 @@ import rethinkdb as r
 import requests
 import os
 import subprocess
+import boto3
+
+s3 = boto3.resource('s3')
+bucket_name = 'bigeyeskeane'
+
+for bucket in s3.buckets.all():
+    print(bucket.name)
 
 conn = r.connect(
     host='aws-us-east-1-portal.14.dblayer.com',
@@ -37,17 +44,19 @@ def paint(job):
         f.write(painting_sem_request.content)
 
     # Do computation
-    # Run as bash script or import into python?
-    # TODO
+    update_job(job.get("id"), {"status": "processing"})
     subprocess.call("python3 neural-doodle/doodle.py --style {painting} --output {output} --device=gpu0 --iterations=80".format(painting=painting_image_name, output=output_image_name),shell=True)
 
     # Upload image to S3
-    # TODO
+    s3_image_name = 'output/doodle-{id}.jpg'.format(id=job.get("id"))
+    s3_object = s3.Object(bucket_name, s3_image_name).put(ACL="public-read",Body=open(output_image_name, 'rb'))
+    url = s3.meta.client.generate_presigned_url('get_object', Params = {'Bucket': bucket_name, 'Key': s3_image_name})
 
     # Update job
-    # TODO
+    update_job(job.get("id"), {"status": "complete", "output_url": url})
 
     # Delete local images
+    os.remove(output_image_name)
     os.remove(output_sem_image_name)
     os.remove(painting_image_name)
     os.remove(painting_sem_image_name)
@@ -55,7 +64,10 @@ def paint(job):
     return
 
 def get_next_job():
-    return r.db("keane").table("paint_jobs").order_by(index="priorityOrder").limit(1).run(conn).next()
+    return r.db("keane").table("paint_jobs").order_by(index="priorityOrder").filter({"status": "queued"}).limit(1).run(conn).next()
+
+def update_job(id, updates):
+    return r.db("keane").table("paint_jobs").get(id).update(updates).run(conn)
 
 def start():
     # Grab highest priority job
