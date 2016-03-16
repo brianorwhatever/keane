@@ -1,7 +1,7 @@
 {
   id,
   priority,
-  input_sem_url,
+  output_sem_url,
   painting_url,
   painting_sem_url,
   type: ('doodle', 'style-transfer'),

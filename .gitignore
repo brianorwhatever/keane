@@ -1,2 +1,6 @@
 rethink.cert
 pyenv
+py3env
+images
+neural-doodle
+vgg19_conv.pkl.bz2

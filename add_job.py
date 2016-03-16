@@ -9,7 +9,7 @@ job = r.db("keane").table("paint_jobs").insert({
     "priority": 1,
     "painting_url": "https://s3-us-west-2.amazonaws.com/bigeyeskeane/paintings/Monet.jpg",
     "painting_sem_url": "https://s3-us-west-2.amazonaws.com/bigeyeskeane/paintings/Monet_sem.png",
-    "input_sem_url": "https://s3-us-west-2.amazonaws.com/bigeyeskeane/input/Landscape_sem.png",
+    "output_sem_url": "https://s3-us-west-2.amazonaws.com/bigeyeskeane/input/Landscape_sem.png",
     "type": "doodle",
     "created_date": r.now()
 }, return_changes=True).run(conn)

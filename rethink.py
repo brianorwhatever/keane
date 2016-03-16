@@ -1,6 +1,7 @@
 import rethinkdb as r
 import requests
 import os
+import subprocess
 
 conn = r.connect(
     host='aws-us-east-1-portal.14.dblayer.com',
@@ -18,23 +19,27 @@ conn = r.connect(
 def paint(job):
     "This paints the doodle in the given style"
     # Grab images from S3
-    input_sem_image_name = 'input_sem.png'
-    input_sem_request = requests.get(job.get("input_sem_url"))
-    with open(input_sem_image_name,'wb') as f:
-        f.write(input_sem_request.content)
+    output_image_name = '/home/brianorwhatever/keane/images/output.jpg'
 
-    painting_image_name = 'painting.jpg'
+    output_sem_image_name = '/home/brianorwhatever/keane/images/output_sem.png'
+    output_sem_request = requests.get(job.get("output_sem_url"))
+    with open(output_sem_image_name,'wb') as f:
+        f.write(output_sem_request.content)
+
+    painting_image_name = '/home/brianorwhatever/keane/images/painting.jpg'
     painting_request = requests.get(job.get("painting_url"))
-    with open('painting.jpg','wb') as f:
+    with open(painting_image_name,'wb') as f:
         f.write(painting_request.content)
 
-    painting_sem_image_name = 'painting_sem.png'
+    painting_sem_image_name = '/home/brianorwhatever/keane/images/painting_sem.png'
     painting_sem_request = requests.get(job.get("painting_sem_url"))
     with open(painting_sem_image_name,'wb') as f:
         f.write(painting_sem_request.content)
 
     # Do computation
+    # Run as bash script or import into python?
     # TODO
+    subprocess.call("python3 neural-doodle/doodle.py --style {painting} --output {output} --device=gpu0 --iterations=80".format(painting=painting_image_name, output=output_image_name),shell=True)
 
     # Upload image to S3
     # TODO
@@ -43,9 +48,10 @@ def paint(job):
     # TODO
 
     # Delete local images
-    os.remove(input_sem_image_name)
+    os.remove(output_sem_image_name)
     os.remove(painting_image_name)
     os.remove(painting_sem_image_name)
+
     return
 
 def get_next_job():
