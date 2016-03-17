@@ -23,6 +23,8 @@ conn = r.connect(
 
 def paint(job):
     "This paints the doodle in the given style"
+    print("Painting job {id}".format(id=job.get("id")))
+
     # Grab images from S3
     output_image_name = '/home/brianorwhatever/keane/images/output.jpg'
 
@@ -75,12 +77,15 @@ def start():
             # Grab highest priority job
             job = get_next_job()
             # call paint on the job
-            print("Painting job {id}".format(id=job.get("id")))
             paint(job)
         except:
             print("Waiting for new jobs..")
             feed = r.db("keane").table("paint_jobs").changes().run(conn)
             for change in feed:
-                print("New job!")
+                try:
+                    job = get_next_job()
+                    paint(job)
+                except:
+                    pass
 
 start()
